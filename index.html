@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dual Ethiopian & Gregorian Calendar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .calendar-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .modal-backdrop {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .modal-content {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-4xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold tracking-tight">Dual Calendar</h1>
+            <p class="text-gray-400 mt-2">Gregorian & Ethiopian Dates at a Glance</p>
+        </header>
+
+        <!-- Calendars Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Gregorian Calendar Card -->
+            <div class="calendar-card rounded-2xl p-8 text-center flex flex-col justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-blue-400 mb-4">Gregorian Calendar</h2>
+                    <div id="gregorian-day" class="text-8xl font-black">--</div>
+                    <div id="gregorian-month-year" class="text-2xl text-gray-300 mt-2">----------, ----</div>
+                </div>
+                <div class="mt-6 text-sm text-gray-500">Western / International Standard</div>
+            </div>
+
+            <!-- Ethiopian Calendar Card -->
+            <div class="calendar-card rounded-2xl p-8 text-center flex flex-col justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-green-400 mb-4">Ethiopian Calendar</h2>
+                    <div id="ethiopian-day" class="text-8xl font-black">--</div>
+                    <div id="ethiopian-month-year" class="text-2xl text-gray-300 mt-2">----------, ----</div>
+                </div>
+                <div class="mt-6 text-sm text-gray-500">Ethiopian / Ge'ez Calendar</div>
+            </div>
+        </div>
+
+        <!-- Info Icon -->
+        <div class="text-center mt-8">
+            <button id="info-button" class="bg-gray-700 hover:bg-gray-600 text-white rounded-full p-3 transition-colors duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div id="info-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop bg-black bg-opacity-70 opacity-0 pointer-events-none">
+        <div class="modal-content bg-gray-800 w-full max-w-md rounded-2xl shadow-xl p-8 border border-gray-700 transform scale-95 opacity-0">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Ethiopian Months Guide</h3>
+                <button id="close-modal-button" class="text-gray-400 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <p class="text-gray-300 mb-6">The Ethiopian calendar has 13 months. The first 12 have 30 days each, and the last month, Pagume, has 5 days (or 6 in a leap year).</p>
+            <ul class="space-y-2 text-gray-200">
+                <li><span class="font-semibold text-green-400">1. Meskerem:</span> September - October</li>
+                <li><span class="font-semibold text-green-400">2. Tikimt:</span> October - November</li>
+                <li><span class="font-semibold text-green-400">3. Hidar:</span> November - December</li>
+                <li><span class="font-semibold text-green-400">4. Tahsas:</span> December - January</li>
+                <li><span class="font-semibold text-green-400">5. Tirr:</span> January - February</li>
+                <li><span class="font-semibold text-green-400">6. Yekatit:</span> February - March</li>
+                <li><span class="font-semibold text-green-400">7. Megabit:</span> March - April</li>
+                <li><span class="font-semibold text-green-400">8. Miyazya:</span> April - May</li>
+                <li><span class="font-semibold text-green-400">9. Ginbot:</span> May - June</li>
+                <li><span class="font-semibold text-green-400">10. Sene:</span> June - July</li>
+                <li><span class="font-semibold text-green-400">11. Hamle:</span> July - August</li>
+                <li><span class="font-semibold text-green-400">12. Nehasse:</span> August - September</li>
+                <li><span class="font-semibold text-green-400">13. Pagume:</span> Early September (5-6 days)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const gregorianDayEl = document.getElementById('gregorian-day');
+            const gregorianMonthYearEl = document.getElementById('gregorian-month-year');
+            const ethiopianDayEl = document.getElementById('ethiopian-day');
+            const ethiopianMonthYearEl = document.getElementById('ethiopian-month-year');
+            const infoButton = document.getElementById('info-button');
+            const closeModalButton = document.getElementById('close-modal-button');
+            const infoModal = document.getElementById('info-modal');
+            const modalContent = infoModal.querySelector('.modal-content');
+
+            // --- Ethiopian Calendar Data ---
+            const ethiopianMonths = [
+                'Meskerem', 'Tikimt', 'Hidar', 'Tahsas', 'Tirr', 'Yekatit',
+                'Megabit', 'Miyazya', 'Ginbot', 'Sene', 'Hamle', 'Nehasse', 'Pagume'
+            ];
+
+            /**
+             * Converts a Gregorian date to an Ethiopian date.
+             * This is an approximation and works for the modern era.
+             * @param {Date} gregDate - The Gregorian date object.
+             * @returns {object} An object with { year, month, day, monthName }.
+             */
+            function gregorianToEthiopian(gregDate) {
+                const gregYear = gregDate.getFullYear();
+                const gregMonth = gregDate.getMonth() + 1;
+                const gregDay = gregDate.getDate();
+
+                // The Ethiopian year is roughly 7-8 years behind the Gregorian.
+                // The Ethiopian New Year is on September 11th (or 12th in a leap year).
+                let ethiopianYear = gregYear - 8;
+                
+                // Check if the Gregorian year is a leap year
+                const isGregLeap = (gregYear % 4 === 0 && gregYear % 100 !== 0) || (gregYear % 400 === 0);
+                
+                // Ethiopian New Year's Day in Gregorian calendar
+                let newYearDay = 11;
+                // The Ethiopian leap year adds a 6th day to Pagume. This happens in the year *preceding* a Gregorian leap year.
+                if ((gregYear + 1) % 4 === 0) {
+                    newYearDay = 12;
+                }
+
+                // Calculate day number in Gregorian year
+                const startOfYear = new Date(gregYear, 0, 0);
+                const diff = gregDate - startOfYear;
+                const oneDay = 1000 * 60 * 60 * 24;
+                const dayOfYear = Math.floor(diff / oneDay);
+
+                let ethiopianDayOfYear;
+                if (gregMonth > 9 || (gregMonth === 9 && gregDay >= newYearDay)) {
+                    // It's after the Ethiopian new year
+                    ethiopianYear = gregYear - 7;
+                    const newYearDate = new Date(gregYear, 8, newYearDay); // September is month 8
+                    ethiopianDayOfYear = Math.floor((gregDate - newYearDate) / oneDay) + 1;
+                } else {
+                    // It's before the Ethiopian new year
+                    const prevGregYear = gregYear - 1;
+                    let prevNewYearDay = 11;
+                    if (gregYear % 4 === 0) { // Check if the current Gregorian year is a leap year
+                        prevNewYearDay = 12;
+                    }
+                    const prevNewYearDate = new Date(prevGregYear, 8, prevNewYearDay);
+                    ethiopianDayOfYear = Math.floor((gregDate - prevNewYearDate) / oneDay) + 1;
+                }
+
+                let ethiopianMonth;
+                let ethiopianDay;
+
+                if (ethiopianDayOfYear <= 360) { // First 12 months
+                    ethiopianMonth = Math.ceil(ethiopianDayOfYear / 30) - 1;
+                    ethiopianDay = (ethiopianDayOfYear - 1) % 30 + 1;
+                } else { // 13th month, Pagume
+                    ethiopianMonth = 12;
+                    ethiopianDay = ethiopianDayOfYear - 360;
+                }
+
+                return {
+                    year: ethiopianYear,
+                    month: ethiopianMonth,
+                    day: ethiopianDay,
+                    monthName: ethiopianMonths[ethiopianMonth]
+                };
+            }
+
+            // --- Main Function to Update UI ---
+            function updateCalendars() {
+                const now = new Date();
+
+                // Update Gregorian Calendar
+                const gregDay = now.getDate();
+                const gregMonthName = now.toLocaleString('default', { month: 'long' });
+                const gregYear = now.getFullYear();
+                gregorianDayEl.textContent = gregDay;
+                gregorianMonthYearEl.textContent = `${gregMonthName}, ${gregYear}`;
+
+                // Update Ethiopian Calendar
+                const ethiopianDate = gregorianToEthiopian(now);
+                ethiopianDayEl.textContent = ethiopianDate.day;
+                ethiopianMonthYearEl.textContent = `${ethiopianDate.monthName}, ${ethiopianDate.year}`;
+            }
+            
+            // --- Modal Logic ---
+            function showModal() {
+                infoModal.classList.remove('pointer-events-none');
+                infoModal.classList.remove('opacity-0');
+                infoModal.classList.add('opacity-100');
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }
+
+            function hideModal() {
+                modalContent.classList.add('scale-95', 'opacity-0');
+                modalContent.classList.remove('scale-100', 'opacity-100');
+                infoModal.classList.remove('opacity-100'); // <-- FIX: Remove opacity-100
+                infoModal.classList.add('opacity-0');
+                setTimeout(() => {
+                    infoModal.classList.add('pointer-events-none');
+                }, 300); // Wait for transition to finish
+            }
+
+            // --- Event Listeners ---
+            infoButton.addEventListener('click', showModal);
+            closeModalButton.addEventListener('click', hideModal);
+            infoModal.addEventListener('click', (e) => {
+                if (e.target === infoModal) { // Click on backdrop
+                    hideModal();
+                }
+            });
+
+            // --- Initial Call ---
+            updateCalendars();
+        });
+    </script>
+</body>
+</html>
